@@ -1,0 +1,12 @@
+# Install torch separately first:
+#   CPU:  pip install torch --index-url https://download.pytorch.org/whl/cpu
+#   GPU:  use the torch that ships with the RunPod PyTorch image (or the CUDA wheel for your driver)
+numpy>=1.26
+opencv-python-headless>=4.9
+pillow>=10.0
+pyyaml>=6.0
+requests>=2.31
+tqdm>=4.66
+onnx>=1.16
+onnxruntime>=1.18
+tensorboard>=2.16

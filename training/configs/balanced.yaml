@@ -1,0 +1,8 @@
+# LA-S: ~12.3k params (C4F16 size class). Default "balanced" preset of the plugin.
+extends: base.yaml
+name: balanced
+model: {preset: balanced, rep: false}
+train:
+  iterations: 200000
+log:
+  out_dir: runs/balanced

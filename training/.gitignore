@@ -1,0 +1,11 @@
+# local data, runs and environments (large; never commit)
+/work/
+/runs/
+/eval/
+/.venv/
+__pycache__/
+*.pyc
+.pytest_cache/
+.ruff_cache/
+*.onnx
+*.pt

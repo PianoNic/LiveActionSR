@@ -1,0 +1,7 @@
+# 50-iteration CPU smoke run on synthetic or tiny data: checks the path, not the quality.
+extends: base.yaml
+name: smoke
+model: {preset: balanced}
+data: {root: work/smoke/baked, patch: 32, val_limit: 16}
+train: {iterations: 50, batch: 8, warmup: 10, workers: 0, device: auto}
+log: {out_dir: work/smoke/run, every: 10, val_every: 1000, tensorboard: false}

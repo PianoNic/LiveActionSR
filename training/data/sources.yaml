@@ -1,0 +1,143 @@
+# Dataset sources. See ../DATASETS.md for the licence of each and why it is (or is not) enabled.
+#
+# Common keys:
+#   id                  unique name (also the output folder)
+#   type                png_sequence | y4m | video | image_dir
+#   split               train | val      (val sources are held out entirely: no scene leaks)
+#   tier                permissive | research   (research sources only run with --include-research)
+#   enabled             false = skipped unless named with --only
+#   positions           how many places in the source to sample a short clip from
+#   crops_per_position  deduplicated crops kept per sampled clip
+#   hr_scale            [lo, hi] area-downscale of the source before cropping. 4K masters are taken
+#                       down to ~1080-1500p (cleans source noise/compression, gives 1080p-like HR);
+#                       1080p sources are only lightly reduced.
+#
+# Sizes: the default extraction (crop 512, clip_len 6) of the permissive set downloads roughly
+# 25-35 GB (most of it 4K frames fetched with HTTP range requests) and writes ~4500 clips (~25 GB
+# of 16-bit PNG).
+
+sources:
+  # ---------------------------------------------------------------- permissive (default set)
+
+  # Tears of Steel (Blender Foundation, 2012), CC-BY 3.0. Live action shot on a Sony F65 with VFX.
+  # Lossless 1080p PNG master on Xiph. Opening logos and end credits are skipped.
+  - id: tears_of_steel
+    type: png_sequence
+    url: "https://media.xiph.org/tearsofsteel/tearsofsteel-1080-png/graded_edit_final_{n:05d}.png"
+    first: 300
+    last: 12999
+    split: train
+    tier: permissive
+    license: CC-BY-3.0 (Blender Foundation | mango.blender.org)
+    positions: 700
+    crops_per_position: 2
+    hr_scale: [0.8, 1.0]
+  - id: tears_of_steel_val
+    type: png_sequence
+    url: "https://media.xiph.org/tearsofsteel/tearsofsteel-1080-png/graded_edit_final_{n:05d}.png"
+    first: 13000
+    last: 14100
+    split: val
+    tier: permissive
+    license: CC-BY-3.0 (Blender Foundation | mango.blender.org)
+    positions: 40
+    crops_per_position: 2
+    hr_scale: [1.0, 1.0]
+
+  # Netflix Open Content "El Fuente" (2013 documentary), CC-BY 4.0 as published in Netflix's
+  # opencontent bucket. 4096x2160 10-bit 4:2:0 BT.709 SDR, 59.94 fps. Only the sampled frames are
+  # fetched (HTTP range requests on the 8 GB y4m files).
+  - id: netflix_elfuente_boat
+    type: y4m
+    url: "http://download.opencontent.netflix.com.s3.amazonaws.com/ElFuente/Netflix_Boat_4096x2160_60fps_10bit_420.y4m"
+    split: train
+    tier: permissive
+    license: CC-BY-4.0 (Netflix Open Content)
+    positions: 40
+    crops_per_position: 4
+    hr_scale: [0.4, 0.7]
+  - id: netflix_elfuente_foodmarket
+    type: y4m
+    url: "http://download.opencontent.netflix.com.s3.amazonaws.com/ElFuente/Netflix_FoodMarket_4096x2160_60fps_10bit_420.y4m"
+    split: train
+    tier: permissive
+    license: CC-BY-4.0 (Netflix Open Content)
+    positions: 40
+    crops_per_position: 4
+    hr_scale: [0.4, 0.7]
+
+  # Netflix Open Content "Sparks" (2017), CC-BY 4.0. SDR UHD ProRes master (46 GB, BT.709),
+  # read remotely by ffmpeg with seeks; only sampled frames are transferred.
+  - id: netflix_sparks_sdr
+    type: video
+    url: "http://download.opencontent.netflix.com.s3.amazonaws.com/sparks/sdr/Sparks_SDR_UHD_4096x2160_5994fps.mov"
+    skip_start: 5
+    skip_end: 30
+    split: train
+    tier: permissive
+    license: CC-BY-4.0 (Netflix Open Content)
+    positions: 120
+    crops_per_position: 3
+    hr_scale: [0.4, 0.7]
+
+  # Netflix Open Content "Nocturne" (2018), CC-BY 4.0. SDR (ACES 2.0 -> 709) UHD ProRes with
+  # synthetic Vision3 film grain: teaches the network what grain looks like after the codec.
+  - id: netflix_nocturne_grain_sdr
+    type: video
+    url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Nocturne/nocturne_filmgrain/nocturne_60fps_uhd_filmgrain_sdr.mov"
+    skip_start: 5
+    skip_end: 30
+    split: train
+    tier: permissive
+    license: CC-BY-4.0 (Netflix Open Content)
+    positions: 80
+    crops_per_position: 3
+    hr_scale: [0.5, 0.8]
+
+  # TU Muenchen 1080p25 sequences (Xiph derf mirror). ReadMe_1080p.txt: "Restrictions of use: No
+  # restrictions. Copyright: No Copyright". Sony HDW-F900, uncompressed 8-bit 4:2:0.
+  - {id: tum_blue_sky, type: y4m, url: "https://media.xiph.org/video/derf/y4m/blue_sky_1080p25.y4m", split: train, tier: permissive, license: "No restrictions / no copyright (TUM)", positions: 16, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: tum_riverbed, type: y4m, url: "https://media.xiph.org/video/derf/y4m/riverbed_1080p25.y4m", split: train, tier: permissive, license: "No restrictions / no copyright (TUM)", positions: 16, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: tum_rush_hour, type: y4m, url: "https://media.xiph.org/video/derf/y4m/rush_hour_1080p25.y4m", split: train, tier: permissive, license: "No restrictions / no copyright (TUM)", positions: 24, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: tum_station2, type: y4m, url: "https://media.xiph.org/video/derf/y4m/station2_1080p25.y4m", split: train, tier: permissive, license: "No restrictions / no copyright (TUM)", positions: 16, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: tum_sunflower, type: y4m, url: "https://media.xiph.org/video/derf/y4m/sunflower_1080p25.y4m", split: train, tier: permissive, license: "No restrictions / no copyright (TUM)", positions: 24, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: tum_tractor, type: y4m, url: "https://media.xiph.org/video/derf/y4m/tractor_1080p25.y4m", split: train, tier: permissive, license: "No restrictions / no copyright (TUM)", positions: 30, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: tum_pedestrian_area, type: y4m, url: "https://media.xiph.org/video/derf/y4m/pedestrian_area_1080p25.y4m", split: val, tier: permissive, license: "No restrictions / no copyright (TUM)", positions: 10, crops_per_position: 3, hr_scale: [1.0, 1.0]}
+
+  # SVT MultiFormat (Sveriges Television, 2001; Xiph derf mirror). The SVT readme on Xiph: "No
+  # restrictions of use / No copyright". 1080p50, converted from 4K film scans.
+  - {id: svt_crowd_run, type: y4m, url: "https://media.xiph.org/video/derf/y4m/crowd_run_1080p50.y4m", split: train, tier: permissive, license: "No restrictions / no copyright (SVT)", positions: 20, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: svt_ducks_take_off, type: y4m, url: "https://media.xiph.org/video/derf/y4m/ducks_take_off_1080p50.y4m", split: train, tier: permissive, license: "No restrictions / no copyright (SVT)", positions: 20, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: svt_in_to_tree, type: y4m, url: "https://media.xiph.org/video/derf/y4m/in_to_tree_1080p50.y4m", split: train, tier: permissive, license: "No restrictions / no copyright (SVT)", positions: 20, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: svt_park_joy, type: y4m, url: "https://media.xiph.org/video/derf/y4m/park_joy_1080p50.y4m", split: train, tier: permissive, license: "No restrictions / no copyright (SVT)", positions: 20, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: svt_old_town_cross, type: y4m, url: "https://media.xiph.org/video/derf/y4m/old_town_cross_1080p50.y4m", split: val, tier: permissive, license: "No restrictions / no copyright (SVT)", positions: 10, crops_per_position: 3, hr_scale: [1.0, 1.0]}
+
+  # Your own footage or stills that you have the rights to (point `path` at a folder).
+  - id: custom_stills
+    type: image_dir
+    path: /workspace/custom_stills
+    split: train
+    tier: permissive
+    license: yours
+    enabled: false
+    positions: 2000
+    crops_per_position: 2
+    hr_scale: [0.5, 1.0]
+
+  # ------------------------------------------------- research-only (opt in: --include-research)
+  # Usable for experiments; do NOT ship weights trained on these under MIT without checking the
+  # terms (see DATASETS.md).
+
+  # NTIA/ITS HDTV sources: "may be used for research purposes, only".
+  - {id: ntia_aspen, type: y4m, url: "https://media.xiph.org/video/derf/y4m/aspen_1080p.y4m", split: train, tier: research, license: "NTIA/ITS research only", positions: 16, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: ntia_red_kayak, type: y4m, url: "https://media.xiph.org/video/derf/y4m/red_kayak_1080p.y4m", split: train, tier: research, license: "NTIA/ITS research only", positions: 16, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: ntia_speed_bag, type: y4m, url: "https://media.xiph.org/video/derf/y4m/speed_bag_1080p.y4m", split: train, tier: research, license: "NTIA/ITS research only", positions: 16, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: ntia_touchdown_pass, type: y4m, url: "https://media.xiph.org/video/derf/y4m/touchdown_pass_1080p.y4m", split: train, tier: research, license: "NTIA/ITS research only", positions: 16, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: ntia_west_wind_easy, type: y4m, url: "https://media.xiph.org/video/derf/y4m/west_wind_easy_1080p.y4m", split: train, tier: research, license: "NTIA/ITS research only", positions: 16, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+
+  # Netflix Chimera clips as mirrored on Xiph carry CC-BY-NC-ND 4.0 copyright files.
+  - {id: xiph_netflix_dinnerscene, type: y4m, url: "https://media.xiph.org/video/derf/Chimera/Netflix_DinnerScene_4096x2160_60fps_10bit_420.y4m", split: train, tier: research, license: "CC-BY-NC-ND-4.0 (Xiph mirror copyright file)", positions: 12, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: xiph_netflix_drivingpov, type: y4m, url: "https://media.xiph.org/video/derf/Chimera/Netflix_DrivingPOV_4096x2160_60fps_10bit_420.y4m", split: train, tier: research, license: "CC-BY-NC-ND-4.0 (Xiph mirror copyright file)", positions: 12, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+
+  # DIV2K / Flickr2K stills: download them yourself, academic research use only.
+  - {id: div2k, type: image_dir, path: /workspace/DIV2K_train_HR, split: train, tier: research, license: "DIV2K: academic research only", positions: 800, crops_per_position: 2, hr_scale: [0.5, 1.0]}

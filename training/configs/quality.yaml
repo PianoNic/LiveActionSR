@@ -1,0 +1,9 @@
+# LA-M: ~47.7k params (C4F32 / ARSR-41k size class). "quality" preset of the plugin.
+extends: base.yaml
+name: quality
+model: {preset: quality, rep: false}
+train:
+  iterations: 300000
+  lr: 4.0e-4
+log:
+  out_dir: runs/quality

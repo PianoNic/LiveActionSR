@@ -1,0 +1,49 @@
+# Shared settings. balanced.yaml / quality.yaml extend this file.
+seed: 0
+
+data:
+  root: work/baked      # output of data/bake.py
+  patch: 64             # LR patch size (HR patch = 128)
+  val_limit: 1024       # validation pairs scored (full 256x256 LR frames)
+
+train:
+  batch: 64
+  lr: 5.0e-4
+  min_lr: 1.0e-6
+  warmup: 2000
+  weight_decay: 1.0e-4
+  betas: [0.9, 0.99]
+  amp: bf16             # bf16 | fp16 | off (CPU always runs fp32)
+  grad_clip: 1.0
+  workers: 8
+  compile: false
+  device: auto
+
+loss:
+  l1: 1.0               # MAE, the main term (see docs/research.md: ARSR)
+  fft: 0.0              # e.g. 0.05 for a little extra crispness
+  edge: 0.0             # e.g. 0.05 Sobel-gradient L1
+
+log:
+  every: 500
+  val_every: 10000
+  tensorboard: true
+
+# Degradation used by data/bake.py --config <this file>. Defaults live in lasr/degrade.py; values
+# here override them. Probabilities are per clip.
+degradation:
+  blur: {p: 0.3, sigma: [0.3, 1.1]}
+  rescale_pass: {p: 0.2, scale: [0.55, 0.9]}
+  downscale_kernels: {bicubic: 0.35, lanczos: 0.25, area: 0.2, bilinear: 0.1, bilinear_aliased: 0.1}
+  sharpen: {p: 0.15, amount: [0.3, 1.0], sigma: [0.6, 1.5]}
+  noise: {p: 0.25, sigma: [1.0, 6.0], luma_only_p: 0.7, correlated_p: 0.5}
+  codec:
+    p: 0.95
+    weights: {x264: 0.45, x265: 0.3, av1: 0.25}
+    crf: {x264: [18, 32], x265: [20, 34], av1: [24, 46]}
+    presets:
+      x264: [veryfast, faster, fast, medium, slow]
+      x265: [superfast, veryfast, faster, fast, medium]
+      av1: ["6", "7", "8", "9", "10"]
+    keyint: [12, 96]
+    bframes: [0, 3]
