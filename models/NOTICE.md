@@ -5,16 +5,17 @@ super-resolution networks trained with the pipeline in [`training/`](../training
 compressed (x264 / x265 / SVT-AV1) live-action footage. The weights are released under the MIT
 licence of this repository.
 
-**Status: preview.** These weights come from a small run (482 clips, 20k iterations). On held-out
-compressed clips they beat Lanczos by about +0.4 dB PSNR-Y (quality: x264 +0.47, x265 +0.35,
-AV1 +0.51 dB). A full run on the whole default dataset replaces them.
+On held-out compressed live-action clips they beat Lanczos by +0.44 dB (balanced) and +0.52 dB
+(quality) PSNR-Y; see [the training results](../training/README.md#results).
 
 The training footage and its attribution:
 
 - _Tears of Steel_ — (CC) Blender Foundation | mango.blender.org, CC BY 3.0
-- _El Fuente_, _Sparks_, _Nocturne_ — Netflix Open Content, CC BY 4.0
+- _Chimera_, _El Fuente_, _Meridian_, _Nocturne_, _Sparks_ — Netflix Open Content, CC BY 4.0
 - TU München 1080p test sequences — courtesy TU München, LDV (no restrictions)
 - SVT MultiFormat test sequences — courtesy SVT Sveriges Television AB (no restrictions)
+- UVG-VCM — Ultra Video Group, Tampere University, CC BY 4.0 (T. Partanen et al., "UVG-VCM:
+  Benchmarking dataset for machine-oriented visual data compression", QoMEX 2026)
 
 See [`training/DATASETS.md`](../training/DATASETS.md) for the sources and their terms.
 

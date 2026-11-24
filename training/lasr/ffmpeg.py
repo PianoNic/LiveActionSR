@@ -170,3 +170,52 @@ def probe(url: str) -> dict:
         "fps": num / den if den else 24.0,
         "duration": float(info.get("format", {}).get("duration", 0.0) or 0.0),
     }
+
+
+@functools.cache
+def has_filter(name: str) -> bool:
+    if not ffmpeg_available():
+        return False
+    out = subprocess.run([FFMPEG, "-hide_banner", "-filters"], capture_output=True, text=True).stdout
+    return any(line.split()[1:2] == [name] for line in out.splitlines() if line.strip())
+
+
+# HDR -> SDR tone maps, by the source's ``tonemap`` key: zscale primaries name of the master.
+# Only pq_p3d65 is validated (Netflix Meridian HDR TIFFs vs Netflix's own Dolby Vision SDR trim of
+# the same frames: 34-36 dB PSNR-Y, correlation >= 0.996 over four shots; DATASETS.md has the
+# numbers). Add other entries only after the same kind of check.
+TONEMAPS = {"pq_p3d65": "smpte432"}
+
+# PQ -> linear light with 203 cd/m2 (BT.2408 HDR reference white) as SDR 1.0, gamut to BT.709,
+# Mobius curve (linear below 0.3, soft roll-off above), BT.709 OETF. Hable and Reinhard, and
+# 100 cd/m2 as reference white, matched the Dolby Vision trim clearly worse.
+_TONEMAP_NPL = 203
+_TONEMAP_CURVE = "mobius:desat=0"
+
+
+def tonemap_vf(primaries: str) -> str:
+    return (
+        f"zscale=tin=smpte2084:min=gbr:pin={primaries}:rin=full:t=linear:m=gbr:p={primaries}:r=full:"
+        f"npl={_TONEMAP_NPL},format=gbrpf32le,zscale=p=bt709:m=gbr:t=linear,tonemap={_TONEMAP_CURVE},"
+        "zscale=t=bt709:m=gbr:p=bt709:r=full,format=rgb48le"
+    )
+
+
+def tonemap_pq_to_sdr(frames: np.ndarray, kind: str = "pq_p3d65") -> np.ndarray:
+    """(T, H, W, 3) float RGB of a PQ master (non-linear PQ code values in [0, 1]) -> float SDR
+    BT.709 RGB in [0, 1]. Needs ffmpeg with zscale (libzimg)."""
+    if kind not in TONEMAPS:
+        raise ValueError(f"unknown tonemap {kind!r}")
+    if not has_filter("zscale"):
+        raise FFmpegError("tone mapping needs an ffmpeg build with the zscale filter (libzimg)")
+    t, h, w, _ = frames.shape
+    raw = (np.clip(frames, 0.0, 1.0) * 65535.0 + 0.5).astype("<u2").tobytes()
+    cmd = [
+        FFMPEG, "-hide_banner", "-loglevel", "error", "-nostdin",
+        "-f", "rawvideo", "-pix_fmt", "rgb48le", "-s", f"{w}x{h}", "-i", "pipe:0",
+        "-vf", tonemap_vf(TONEMAPS[kind]), "-fps_mode", "passthrough", "-f", "rawvideo", "pipe:1",
+    ]  # fmt: skip
+    out = np.frombuffer(_run(cmd, raw), "<u2")
+    if out.size < t * h * w * 3:
+        raise FFmpegError(f"tone map returned {out.size // (h * w * 3)} frames, expected {t}")
+    return out[: t * h * w * 3].reshape(t, h, w, 3).astype(np.float32) / 65535.0

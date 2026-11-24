@@ -2,9 +2,14 @@
 #
 # Common keys:
 #   id                  unique name (also the output folder)
-#   type                png_sequence | y4m | video | image_dir
+#   type                png_sequence | y4m | video | raw_yuv | zip_sequence | image_dir
+#   tonemap             pq_p3d65: the source is an HDR PQ / P3-D65 master; tone-map it to SDR BT.709
+#   raw_yuv keys        width, height, pix_fmt (ffmpeg name), matrix (bt709), range (tv | pc),
+#                       band_rows (fetch only that many rows of each sampled frame)
+#   zip_sequence keys   url of the zip, patterns (member globs; sorted by name = frame order)
 #   split               train | val      (val sources are held out entirely: no scene leaks)
-#   tier                permissive | research   (research sources only run with --include-research)
+#   tier                permissive | sharealike | research   (sharealike runs with --include-sharealike,
+#                       research and sharealike with --include-research)
 #   enabled             false = skipped unless named with --only
 #   positions           how many places in the source to sample a short clip from
 #   crops_per_position  deduplicated crops kept per sampled clip
@@ -13,8 +18,10 @@
 #                       1080p sources are only lightly reduced.
 #
 # Sizes: the default extraction (crop 512, clip_len 6) of the permissive set downloads roughly
-# 25-35 GB (most of it 4K frames fetched with HTTP range requests) and writes ~4500 clips (~25 GB
-# of 16-bit PNG).
+# 100-115 GB (most of it 4K frames fetched with HTTP range requests; ~77 GB of that is for the
+# sources added in November 2026) and writes up to ~6550 clips (~6350 train + ~180 val, i.e.
+# positions x crops; the flat/duplicate filter drops some), ~40 GB of 16-bit PNG. Before November
+# 2026 it was 25-35 GB and ~3000 clips. --scale-positions scales every source.
 
 sources:
   # ---------------------------------------------------------------- permissive (default set)
@@ -112,6 +119,99 @@ sources:
   - {id: svt_park_joy, type: y4m, url: "https://media.xiph.org/video/derf/y4m/park_joy_1080p50.y4m", split: train, tier: permissive, license: "No restrictions / no copyright (SVT)", positions: 20, crops_per_position: 3, hr_scale: [0.7, 1.0]}
   - {id: svt_old_town_cross, type: y4m, url: "https://media.xiph.org/video/derf/y4m/old_town_cross_1080p50.y4m", split: val, tier: permissive, license: "No restrictions / no copyright (SVT)", positions: 10, crops_per_position: 3, hr_scale: [1.0, 1.0]}
 
+  # ------------------------------------------------------- permissive: added November 2026
+  # See DATASETS.md ("Added in November 2026") for the licence check of each of these.
+
+  # Netflix Open Content: Chimera (2014) and the El Fuente (2013) scenes that are not in ElFuente/,
+  # as uncompressed 3840x2160 10-bit 4:2:0 BT.709 .yuv in the bucket's Netflix_test_conditions/
+  # folder. CC-BY 4.0 (the folder's 2021 licence file and opencontent.netflix.com). Only a
+  # 1344-row band of each sampled frame is fetched (band_rows): ~93 MB per position.
+  # Chimera: dinner party (faces, low light), bar, driving POV, freeway, aerial, roller coaster,
+  # fountain with a toddler (water), wind in foliage. PierSeaside is held out for validation.
+  - {id: netflix_chimera_aerial, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/Chimera-Aerial_3840x2160_2997fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 32, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_chimera_barscene1, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/Chimera-BarScene1_3840x2160_2997fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 16, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_chimera_barscene2, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/Chimera-BarScene2_3840x2160_2997fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 16, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_chimera_dinnerscene, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/Chimera-DinnerScene_3840x2160_2997fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 24, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_chimera_drivingpov, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/Chimera-DrivingPOV_3840x2160_2997fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 32, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_chimera_freeway, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/Chimera-Freeway_3840x2160_2398fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 16, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_chimera_rollercoaster, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/Chimera-RollerCoasterPassengers_3840x2160_2997fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 28, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_chimera_toddlerfountain, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/Chimera-ToddlerFountain_3840x2160_2997fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 32, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_chimera_windandnature, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/Chimera-WindAndNature_3840x2160_2997fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 20, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_chimera_pierseaside, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/Chimera-PierSeaside_3840x2160_2997fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: val, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 8, crops_per_position: 3, hr_scale: [0.5, 0.5]}
+  # El Fuente: boxing gym, street crossing, market, narrator close-up, ritual dance, tango, flag in a tunnel.
+  - {id: netflix_elfuente_boxingpractice, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/ElFuente-BoxingPractice_3840x2160_60fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 20, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_elfuente_crosswalk, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/ElFuente-Crosswalk_3840x2160_60fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 24, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_elfuente_foodmarket2, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/ElFuente-FoodMarket2_3840x2160_60fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 24, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_elfuente_narrator, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/ElFuente-Narrator_3840x2160_60fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 24, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_elfuente_ritualdance, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/ElFuente-RitualDance_3840x2160_60fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 20, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_elfuente_tango, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/ElFuente-Tango_3840x2160_60fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 24, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_elfuente_tunnelflag, type: raw_yuv, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Netflix_test_conditions/ElFuente-TunnelFlag_3840x2160_60fps_10bit_420.yuv", width: 3840, height: 2160, pix_fmt: yuv420p10le, band_rows: 1344, split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 28, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+
+  # Netflix Open Content "Meridian" (2016, 1940s noir: faces, smoke, night, period costume, signage),
+  # official SDR versions of seven shots made from the Dolby Vision trim pass: lossless JPEG 2000
+  # 3840x2160 10-bit 4:2:0 BT.709 frames in zips (aom_test_materials/SDR/meridian). CC-BY 4.0. Only
+  # the sampled members are fetched: ~43 MB per position.
+  - {id: netflix_meridian_sdr_1782_2163, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/meridian/1782-2163.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 36, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_meridian_sdr_11872_12263, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/meridian/11872-12263.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 36, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_meridian_sdr_12264_12745, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/meridian/12264-12745.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 36, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_meridian_sdr_15932_16309, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/meridian/15932-16309.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 36, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_meridian_sdr_20988_21412, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/meridian/20988-21412.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 36, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_meridian_sdr_22412_22738, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/meridian/22412-22738.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 36, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: netflix_meridian_sdr_24058_24550, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/meridian/24058-24550.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 36, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+
+  # Meridian, the whole film: the 16-bit TIFF master is HDR (PQ, P3-D65). tonemap: pq_p3d65
+  # converts it to SDR BT.709 with the tone map that matched Netflix's own SDR trim of the same
+  # frames at 34-36 dB PSNR-Y (DATASETS.md). 50 MB per frame, so this is the most expensive source
+  # per clip (~300 MB per position); it is here for the scenes the seven SDR shots miss.
+  # Frames 240-34500: no opening logo, no end credits (they start at ~580 s = frame ~34800).
+  - id: netflix_meridian_hdr_tonemapped
+    type: png_sequence
+    url: "http://download.opencontent.netflix.com.s3.amazonaws.com/Meridian/tiffs/Meridian_UHD4k5994p_HDR_P3PQ_{n:05d}.tif"
+    first: 240
+    last: 34500
+    tonemap: pq_p3d65
+    split: train
+    tier: permissive
+    license: CC-BY-4.0 (Netflix Open Content)
+    positions: 40
+    crops_per_position: 4
+    hr_scale: [0.4, 0.7]
+
+  # Netflix Open Content "Nocturne" (2018): the clean official SDR shots (no synthetic grain; the
+  # film-grain version above is read separately), JPEG 2000 in zips like Meridian. ~22 MB per position.
+  - {id: netflix_nocturne_sdr_2370_2539, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/nocturne/2370-2539.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 8, crops_per_position: 3, hr_scale: [0.4, 0.7]}
+  - {id: netflix_nocturne_sdr_8540_9009, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/nocturne/8540-9009.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 20, crops_per_position: 3, hr_scale: [0.4, 0.7]}
+  - {id: netflix_nocturne_sdr_9010_9349, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/nocturne/9010-9349.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 14, crops_per_position: 3, hr_scale: [0.4, 0.7]}
+  - {id: netflix_nocturne_sdr_17140_17709, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/nocturne/17140-17709.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 22, crops_per_position: 3, hr_scale: [0.4, 0.7]}
+  - {id: netflix_nocturne_sdr_18013_18315, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/nocturne/18013-18315.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 14, crops_per_position: 3, hr_scale: [0.4, 0.7]}
+  - {id: netflix_nocturne_sdr_23820_24322, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/nocturne/23820-24322.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 20, crops_per_position: 3, hr_scale: [0.4, 0.7]}
+  - {id: netflix_nocturne_sdr_27740_28109, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/nocturne/27740-28109.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 14, crops_per_position: 3, hr_scale: [0.4, 0.7]}
+  - {id: netflix_nocturne_sdr_32660_32799, type: zip_sequence, url: "http://download.opencontent.netflix.com.s3.amazonaws.com/aom_test_materials/SDR/nocturne/32660-32799.zip", patterns: ["*.j2k"], split: train, tier: permissive, license: "CC-BY-4.0 (Netflix Open Content)", positions: 7, crops_per_position: 3, hr_scale: [0.4, 0.7]}
+
+  # UVG-VCM (Tampere University), CC-BY 4.0: uncompressed 3840x2160 16-bit 4:4:4 full-range .yuv
+  # (camera footage converted to 16 bit; flat areas show some camera-codec texture at 1:1, so it
+  # is area-downscaled to 0.4-0.55x). Sports (floorball, volleyball), traffic, driving in snow,
+  # campus, offices, a robot, karting. Faces and licence plates are masked in the source. A band
+  # of 1280 rows per frame: ~177 MB per position. CampusView is held out for validation.
+  - {id: uvg_highway_view, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/HighwayView/HighwayView_3840x2160_60fps_yuv444_16bits_600.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 6, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_floorball_train, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/FloorballTrain/FloorballTrain_3840x2160_60fps_yuv444_16bits_600.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 6, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_floorball_game, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/FloorballGame/FloorballGame_3840x2160_60fps_yuv444_16bits_420.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 6, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_spot_robot, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/SpotRobot/SpotRobot_3840x2160_60fps_yuv444_16bits_600.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 6, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_volleyball_game, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/VolleyballGame/VolleyballGame_3840x2160_60fps_yuv444_16bits_600.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 6, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_winter_drive, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/WinterDrive/WinterDrive_3840x2160_60fps_yuv444_16bits_600.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 6, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_highway_drive, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/HighwayDrive/HighwayDrive_3840x2160_60fps_yuv444_16bits_600.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 6, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_traffic_lights, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/TrafficLights/TrafficLights_3840x2160_60fps_yuv444_16bits_600.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 6, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_office_walk, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/OfficeWalk/OfficeWalk_3840x2160_60fps_yuv444_16bits_600.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 4, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_boat_reverse, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/BoatReverse/BoatReverse_3840x2160_60fps_yuv444_16bits_300.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 4, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_job_fair, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/JobFair/JobFair_3840x2160_60fps_yuv444_16bits_600.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 6, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_car_park, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/CarPark/CarPark_3840x2160_60fps_yuv444_16bits_600.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 6, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_parking_garage, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/ParkingGarage/ParkingGarage_3840x2160_60fps_yuv444_16bits_1140.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 10, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_karting_time, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/KartingTime/KartingTime_3840x2160_60fps_yuv444_16bits_70.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 2, crops_per_position: 4, hr_scale: [0.4, 0.55]}
+  - {id: uvg_campus_view, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/CampusView/CampusView_3840x2160_60fps_yuv444_16bits_600.yuv", width: 3840, height: 2160, pix_fmt: yuv444p16le, range: pc, band_rows: 1280, split: val, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 6, crops_per_position: 3, hr_scale: [0.5, 0.5]}
+  # The two 1080p stereo scenes (left camera only): 8-bit 4:2:2, low light, signage. ~25 MB per position.
+  - {id: uvg_under_park, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/UnderPark/UnderPark_1920x1080_30fps_yuv422_8bits_300.yuv", width: 1920, height: 1080, pix_fmt: yuv422p, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 10, crops_per_position: 3, hr_scale: [0.75, 1.0]}
+  - {id: uvg_auditorium_walk, type: raw_yuv, url: "https://tie-ultravideo.rd.tuni.fi/UVG-VCM/AuditoriumWalk/AuditoriumWalk_1920x1080_30fps_yuv422_8bits_300.yuv", width: 1920, height: 1080, pix_fmt: yuv422p, split: train, tier: permissive, license: "CC-BY-4.0 (UVG-VCM, Tampere University)", positions: 10, crops_per_position: 3, hr_scale: [0.75, 1.0]}
+
   # Your own footage or stills that you have the rights to (point `path` at a folder).
   - id: custom_stills
     type: image_dir
@@ -123,6 +223,22 @@ sources:
     positions: 2000
     crops_per_position: 2
     hr_scale: [0.5, 1.0]
+
+  # ------------------------------------------------------------- sharealike (opt in)
+  # CC BY-SA 4.0 clips from the AOM common test conditions (a *_Copyright.txt next to each file).
+  # Commercial use and derivatives are allowed, but if trained weights count as "adapted material"
+  # they would have to be BY-SA too, so these only run with --include-sharealike (or
+  # --include-research). Uncompressed y4m as uploaded (the camera originals were compressed).
+  - {id: aom_neon1224, type: y4m, url: "https://media.xiph.org/video/aomctc/test_set/a1_4k/Neon1224_3840x2160_2997fps.y4m", split: train, tier: sharealike, license: "CC-BY-SA-4.0 (James Leslie Skinner)", positions: 12, crops_per_position: 4, hr_scale: [0.4, 0.7]}
+  - {id: aom_worldcup, type: y4m, url: "https://media.xiph.org/video/aomctc/test_set/a2_2k/WorldCup_1920x1080_30p.y4m", split: train, tier: sharealike, license: "CC-BY-SA-4.0 (James Leslie Skinner)", positions: 8, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: aom_worldcup_far, type: y4m, url: "https://media.xiph.org/video/aomctc/test_set/a2_2k/WorldCup_far_1920x1080_30p.y4m", split: train, tier: sharealike, license: "CC-BY-SA-4.0 (James Leslie Skinner)", positions: 8, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: aom_skater227, type: y4m, url: "https://media.xiph.org/video/aomctc/test_set/a2_2k/Skater227_1920x1080_30fps.y4m", split: train, tier: sharealike, license: "CC-BY-SA-4.0 (James Leslie Skinner)", positions: 10, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: aom_vertical_carnaby, type: y4m, url: "https://media.xiph.org/video/aomctc/test_set/a2_2k/Vertical_Carnaby_1080x1920_5994.y4m", split: train, tier: sharealike, license: "CC-BY-SA-4.0 (James Leslie Skinner)", positions: 8, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: aom_vertical_bees, type: y4m, url: "https://media.xiph.org/video/aomctc/test_set/a2_2k/Vertical_bees_1080x1920_2997.y4m", split: train, tier: sharealike, license: "CC-BY-SA-4.0 (James Leslie Skinner)", positions: 8, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: aom_walkinginstreet, type: y4m, url: "https://media.xiph.org/video/aomctc/test_set/a2_2k/WalkingInStreet_1920x1080_30fps.y4m", split: train, tier: sharealike, license: "CC-BY-SA-4.0 (Victor Cherepanov)", positions: 8, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: aom_motorcycle, type: y4m, url: "https://media.xiph.org/video/aomctc/test_set/a2_2k/Motorcycle_1920x1080_30fps_8bit.y4m", split: train, tier: sharealike, license: "CC-BY-SA-4.0 (Neil Birkbeck)", positions: 8, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: aom_mountainbike, type: y4m, url: "https://media.xiph.org/video/aomctc/test_set/a2_2k/MountainBike_1920x1080_30fps_8bit.y4m", split: train, tier: sharealike, license: "CC-BY-SA-4.0 (Neil Birkbeck)", positions: 8, crops_per_position: 3, hr_scale: [0.7, 1.0]}
+  - {id: aom_treesandgrass, type: y4m, url: "https://media.xiph.org/video/aomctc/test_set/a2_2k/TreesAndGrass_1920_1080_30fps_8bit.y4m", split: train, tier: sharealike, license: "CC-BY-SA-4.0 (Hangyu Kuang)", positions: 8, crops_per_position: 3, hr_scale: [0.7, 1.0]}
 
   # ------------------------------------------------- research-only (opt in: --include-research)
   # Usable for experiments; do NOT ship weights trained on these under MIT without checking the

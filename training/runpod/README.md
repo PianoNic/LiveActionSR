@@ -31,7 +31,7 @@ bash training/runpod/run.sh            # ~1.5-2 h on an RTX 4090 pod, see below
 Knobs (environment variables): `WORK` (default `/workspace/lasr`), `SCALE_POSITIONS` (dataset
 size multiplier, e.g. `0.25` for a cheap trial), `VARIANTS` (degradations per clip, default 4),
 `BAL_ITERS` / `QUAL_ITERS` (200k / 300k), `PARALLEL=1` (train both models at once), `WORKERS`,
-`LOADER_WORKERS`, and `INCLUDE_RESEARCH=1` (adds research-only data, see `../DATASETS.md`).
+`LOADER_WORKERS`, and `INCLUDE_SHAREALIKE=1` (adds the CC BY-SA sources) and `INCLUDE_RESEARCH=1` (adds research-only data too; see `../DATASETS.md`).
 
 Watch progress with `tail -f /workspace/lasr/train_*.log`, or with
 `tensorboard --logdir /workspace/lasr/runs` (expose port 6006). Copy the two JSON files plus

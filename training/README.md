@@ -22,8 +22,8 @@ data/sources.yaml ─► data/fetch.py ─► HR crops (16-bit PNG clips)
 |---|---|
 | `lasr/models.py` | `LumaSR`: conv3x3(1→F) ReLU → [conv3x3(F→F) ReLU] x blocks → conv3x3(F→4) → depth_to_space(2) + bilinear 2x. Presets `balanced` (F=16, 5 blocks, **12,340 params**, ArtCNN C4F16 class) and `quality` (F=32, 5 blocks, **47,716 params**, C4F32 / ARSR-41k class). Optional `rep: true` trains RepConv blocks (3x3 + 1x1 + identity) that fold exactly into plain conv3x3 for export |
 | `lasr/degrade.py` | The degradation recipe (below) |
-| `lasr/ffmpeg.py` | Pipe-only ffmpeg wrappers: codec round-trip, frame decoding, probing |
-| `lasr/sources.py` | Source readers (PNG sequences, ranged y4m over HTTP, remote ffmpeg seeks, still folders with synthetic pans), crop selection and dedup |
+| `lasr/ffmpeg.py` | Pipe-only ffmpeg wrappers: codec round-trip, frame decoding, probing, HDR PQ → SDR BT.709 tone map (validated against Netflix's official SDR grade, see DATASETS.md) |
+| `lasr/sources.py` | Source readers (PNG/TIFF sequences, ranged y4m and raw planar YUV over HTTP with optional row bands, frames inside remote zips, remote ffmpeg seeks, still folders with synthetic pans), tier selection, crop selection and dedup |
 | `lasr/bake.py`, `lasr/data.py` | Multiprocess pre-baking into shards; random-patch and full-frame datasets |
 | `lasr/validate.py`, `lasr/metrics.py` | PSNR-Y / SSIM-Y vs bilinear, bicubic and Lanczos, overall and per codec |
 | `train.py` | L1 (+ optional FFT/edge), AdamW, warmup + cosine, bf16 autocast, CSV + TensorBoard, `last.pt` / `best.pt`, resume |
@@ -31,7 +31,7 @@ data/sources.yaml ─► data/fetch.py ─► HR crops (16-bit PNG clips)
 | `evaluate.py` | Model vs Lanczos (and optionally a second model or an external tool) on a video or frames, side-by-sides + metrics |
 | `configs/` | `base.yaml` (shared + degradation), `balanced.yaml`, `quality.yaml`, `smoke.yaml` |
 | `runpod/` | `setup.sh`, `run.sh`, `Dockerfile` and a README with GPU choice, time and cost |
-| `DATASETS.md` | Every source and its licence |
+| `DATASETS.md` | Every source and its licence, plus the rejected ones and why |
 
 ## The degradation recipe
 
@@ -122,13 +122,18 @@ in `export.py` and by `tests/test_export.py`:
   sampler at output pixel centres, with weights 0.75 / 0.25.
 - **Output**: clamp to [0, 1]. Combine it with bilinear-upscaled chroma.
 
-## Results so far
+## Results
 
-| Run | Data | Iterations | val PSNR-Y gain vs Lanczos |
+Gain in PSNR-Y over Lanczos on held-out clips (half clean, half through x264 / x265 / SVT-AV1).
+Both runs were trained on a local RTX 5080 (balanced 200k iterations, quality 300k). Each pair of
+models is scored on both validation sets, so the numbers compare like with like.
+
+| Models | Training data | val set A (840 pairs) | val set B (1,092 pairs, adds Netflix / UVG) |
 |---|---|---|---|
-| balanced (local RTX 5080, 1.5 min) | 482 real clips (TUM, SVT, ToS), 3 variants | 20k | **+0.39 dB** (33.54 vs 33.14) |
-| quality (local RTX 5080, 2 min) | same | 20k | **+0.45 dB** (33.59 vs 33.14); x264 +0.47, x265 +0.35, AV1 +0.51 |
-| `evaluate.py`, TUM pedestrian_area (held out), x264 CRF 27 | — | — | quality +0.39 dB PSNR-Y, **+1.5 VMAF** (74.5 vs 73.0) |
+| balanced, baseline | 3,054 clips, 34,965 pairs (Tears of Steel, TUM, SVT, Netflix El Fuente / Sparks / Nocturne) | +0.421 dB | +0.422 dB |
+| balanced, **shipped** | 6,464 clips, 75,372 pairs (adds Netflix Chimera / Meridian / more El Fuente and Nocturne, UVG-VCM) | **+0.439 dB** | **+0.443 dB** |
+| quality, baseline | as above | +0.504 dB | +0.506 dB |
+| quality, **shipped** | as above | **+0.513 dB** | **+0.522 dB** |
 
-These are pipeline checks on about 15 % of the default dataset, not release numbers. The full
-RunPod run is the real result.
+Shipped quality per codec on set B: clean +0.43, x264 +0.53, x265 +0.48, AV1 +0.58 dB. The
+whole pipeline (fetch, bake, train both, export) took 1 h 40 min locally.

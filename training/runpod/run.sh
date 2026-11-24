@@ -20,6 +20,7 @@ BAL_ITERS="${BAL_ITERS:-200000}"
 QUAL_ITERS="${QUAL_ITERS:-300000}"
 PARALLEL="${PARALLEL:-0}"                       # 1 = train both models at once (GPU is underused by one)
 INCLUDE_RESEARCH="${INCLUDE_RESEARCH:-0}"       # 1 = also research-only sources (see DATASETS.md)
+INCLUDE_SHAREALIKE="${INCLUDE_SHAREALIKE:-0}"   # 1 = also CC BY-SA sources (see DATASETS.md)
 SKIP_SETUP="${SKIP_SETUP:-0}"
 
 cd "$TRAINING"
@@ -29,6 +30,7 @@ stamp() { date '+%H:%M:%S'; }
 
 echo "[$(stamp)] 1/4 fetch HR clips -> $WORK/hr"
 research=()
+[ "$INCLUDE_SHAREALIKE" = 1 ] && research=(--include-sharealike)
 [ "$INCLUDE_RESEARCH" = 1 ] && research=(--include-research)
 python data/fetch.py --out "$WORK/hr" --scale-positions "$SCALE_POSITIONS" --threads 16 "${research[@]}"
 
