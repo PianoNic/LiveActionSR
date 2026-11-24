@@ -76,6 +76,10 @@ def encoder_args(codec: str, crf: int, preset: str, keyint: int, bframes: int) -
     raise ValueError(f"unknown codec {codec!r}")
 
 
+# The smallest frame side an encoder accepts.
+MIN_FRAME_SIDE = {"av1": 64}
+
+
 def codec_roundtrip(
     frames: np.ndarray,
     codec: str,
@@ -94,6 +98,14 @@ def codec_roundtrip(
     t, h, w, _ = frames.shape
     if h % 2 or w % 2:
         raise ValueError("frame size must be even for 4:2:0")
+    # Some encoders refuse tiny frames (SVT-AV1 wants at least 64x64): pad by repeating the edge,
+    # encode, and crop the decoded frames back.
+    min_side = MIN_FRAME_SIDE.get(codec, 0)
+    if h < min_side or w < min_side:
+        ph, pw = max(0, min_side - h), max(0, min_side - w)
+        padded = np.pad(frames, ((0, 0), (0, ph), (0, pw), (0, 0)), mode="edge")
+        out, size = codec_roundtrip(padded, codec, crf, preset, keyint, bframes, fps)
+        return np.ascontiguousarray(out[:, :h, :w]), size
     raw = (np.clip(frames, 0.0, 1.0) * 65535.0 + 0.5).astype("<u2").tobytes()
     enc = [
         FFMPEG, "-hide_banner", "-loglevel", "error", "-nostdin",
