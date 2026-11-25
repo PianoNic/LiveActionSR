@@ -2,3 +2,10 @@ __pycache__/
 *.pyc
 *.local.*
 paper/build/
+paper/results/frames/
+paper/*.aux
+paper/*.log
+paper/*.out
+paper/*.fls
+paper/*.fdb_latexmk
+paper/results/vmaf.json

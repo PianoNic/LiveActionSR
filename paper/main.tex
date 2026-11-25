@@ -39,9 +39,12 @@ content-neutral ones are LGPL. We present \emph{LiveActionSR}, two 2$\times$ lum
 through real x264, x265 and SVT-AV1 round-trips. They run as hand-written WGSL compute shaders in
 a browser video player, in 2.9 and 9.9\,ms for 1080p$\to$4K on a desktop GPU and about a
 third of that for 720p$\to$1440p. On held-out streaming-compressed clips they gain
-\gainBalStream\,dB and \gainQualStream\,dB PSNR-Y over Lanczos, against \gainEfStream\,dB for a
-ten times larger network trained for the same task. Doubling the training data raised both gains on
-every validation set. We release the weights (MIT), the training pipeline, the
+\gainBalStream\,dB and \gainQualStream\,dB PSNR-Y (\vmafBalStream\ and \vmafQualStream\ VMAF) over
+Lanczos. Under the same protocol a ten times larger network fine-tuned for streaming, EfRLFN, stays
+below Lanczos. On clean downscales the picture splits: our networks gain up to
+0.6\,dB on textured frames but lose on flat, nearly flawless ones, ending
+\gainQualClean\,dB below Lanczos on average. Doubling the training data raised both gains on every
+validation set. We release the weights (MIT), the training pipeline, the
 data recipe with its licence audit, and a WebGPU port of EfRLFN.
 \end{abstract}
 
@@ -226,13 +229,33 @@ RTX~5080, f16).
 \paragraph{Results.} \Cref{tab:main} shows the main results.
 \begin{itemize}
 \setlength\itemsep{0pt}
-\item \textbf{Streaming track:} \emph{quality} gains \gainQualStream\,dB over Lanczos and
-\emph{balanced} \gainBalStream\,dB. EfRLFN, ten times larger than \emph{quality}, reaches
-\gainEfStream\,dB.
-\item \textbf{Clean track:} \emph{quality} gains \gainQualClean\,dB and EfRLFN \gainEfClean\,dB.
+\item \textbf{Streaming track:} our networks rank first and second in all three metrics.
+\emph{quality} gains \gainQualStream\,dB PSNR-Y and \vmafQualStream\ VMAF over Lanczos, and
+\emph{balanced} \gainBalStream\,dB and \vmafBalStream.
+\item \textbf{EfRLFN} stays below Lanczos (\gainEfStream\,dB) under our protocol, despite being ten
+times larger than \emph{quality}. Its conversion is exact (the converter checks it against the
+upstream PyTorch model) and its output is not shifted: a sub-pixel alignment search finds the
+best fit at zero offset. We suspect the gap comes from the degradation it was trained on, which differs
+from a bicubic 2$\times$ downscale followed by a standard encode. EfRLFN's own benchmark should
+not be read from these numbers.
+\item \textbf{Clean track:} Lanczos wins on average. \emph{quality} ends \gainQualClean\,dB and
+\emph{balanced} \gainBalClean\,dB below it.
 \end{itemize}
-\Cref{tab:codecs} splits Track~2 by codec. The gain is largest for \codecBest, where the encoder
-removes the most high-frequency detail that the network can restore from context.
+
+\Cref{tab:flat} explains the clean-track result.
+\begin{itemize}
+\setlength\itemsep{0pt}
+\item \textbf{Textured frames} (Lanczos below 34\,dB, 409 of 1{,}092): \emph{quality} gains
++0.62\,dB.
+\item \textbf{Flat, nearly flawless frames} (Lanczos at 42\,dB and above): it loses about 2\,dB.
+\end{itemize}
+A network trained almost entirely (95\,\%) on codec damage adds a small correction everywhere. On a
+frame that interpolation already reproduces to 42\,dB, that correction is error. Because PSNR is
+averaged in the log domain per frame, these frames weigh heavily. In streaming, the codec makes
+such frames rare: in Track~2 the per-codec gains are all positive (\cref{tab:codecs}), largest for
+\codecBest.
+
+\input{tables/flat}
 
 \input{tables/codecs}
 
@@ -247,8 +270,10 @@ parameters, capacity limits the result before data does.
 \begin{figure*}[t]
   \centering
   \includegraphics[width=\textwidth]{figures/visual.pdf}
-  \caption{\textbf{Visual comparison} on held-out frames (Track~2). Top-left of each block: the full
-  frame with the crop marked. PSNR-Y of the crop below each panel.}
+  \caption{\textbf{Visual comparison} on held-out scenes, x264 CRF~26. For each scene the
+  96$\times$96 crop (with detail) where \emph{quality} gains most over Lanczos was selected, so
+  the crops show the best case, not a random sample. Luma models use bilinear chroma. PSNR-Y of
+  the crop below each panel.}
   \label{fig:visual}
 \end{figure*}
 
@@ -270,6 +295,9 @@ after decoding at 4K output.
 \section{Limitations}
 \begin{itemize}
 \setlength\itemsep{0pt}
+\item \textbf{Clean, flat input.} On frames that interpolation already reproduces almost
+perfectly, the networks lose up to 2\,dB (\cref{tab:flat}). Mixing more uncompressed pairs into
+training, or a gate on the residual, should close this; neither is evaluated here.
 \item \textbf{Smoothing.} The networks are PSNR-trained and smooth rather than hallucinate; the
 plugin re-adds film grain afterwards, which our metrics do not reward.
 \item \textbf{Chroma.} Chroma is only interpolated.
@@ -281,8 +309,10 @@ right test for the grain and sharpening stages.
 
 \section{Conclusion}
 For player-side upscaling of compressed live action, a 12k--48k parameter luma network trained
-on real codec round-trips of permissively licensed footage reaches half a decibel over Lanczos.
-It does so at a cost that fits integrated GPUs, and it ships under MIT. The weights, the training
+on real codec round-trips of permissively licensed footage gains about half a decibel PSNR-Y and
+3 VMAF points over Lanczos on streaming-compressed input. It does so at a cost that fits
+integrated GPUs, and it ships under MIT. On clean, flat input it does not beat Lanczos, which
+marks where the next iteration should go. The weights, the training
 pipeline, the data recipe and the browser runtime are available at
 \url{https://github.com/PianoNic/LiveActionSR},
 \url{https://huggingface.co/PianoNic/LiveActionSR-2x} and

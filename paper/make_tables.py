@@ -56,6 +56,7 @@ def main_table(res: dict) -> str:
         [res["clean"][n]["ssim"] for n in names],
         [res["streaming"][n]["psnr"] for n in names],
         [res["streaming"][n]["ssim"] for n in names],
+        [res["streaming"][n].get("vmaf") for n in names],
     ]
     marked = [marks(c) for c in cols]
     order = sorted(names, key=lambda n: -res["streaming"][n]["psnr"])
@@ -68,7 +69,7 @@ def main_table(res: dict) -> str:
         t = f"{ms:.2f}" if ms else "--"
         gain = res["streaming"][n]["psnr"] - lanczos
         g = f"{gain:+.2f}" if n != "lanczos" else "0.00"
-        cells = [label, p, t, marked[0][i], marked[1][i], marked[2][i], marked[3][i], g, str(rank[n])]
+        cells = [label, p, t, marked[0][i], marked[1][i], marked[2][i], marked[3][i], marked[4][i], g, str(rank[n])]
         pre = "\\rowcolor{gray!12} " if ours else ""
         rows.append(pre + " & ".join(cells) + " \\\\")
         if n == "lanczos":
@@ -77,14 +78,14 @@ def main_table(res: dict) -> str:
         "\\begin{table*}[t]\n\\centering\n"
         "\\caption{\\textbf{Main results} on held-out live-action clips, 2$\\times$. Track~1: clean bicubic "
         "downscale. Track~2: the same plus one x264 / x265 / SVT-AV1 round-trip at streaming quality, pooled. "
-        "PSNR / SSIM on BT.709 luma. Runtime: complete in-browser chain at 1080p$\\to$4K (WebGPU, RTX~5080). "
-        "\\best{Red}: best, \\second{blue}: second. Rank by Track~2 PSNR.}\n"
+        "PSNR / SSIM on BT.709 luma, VMAF on luma. Runtime: complete in-browser chain at 1080p$\\to$4K (WebGPU, RTX~5080). "
+        "\\best{Red}: best, \\second{blue}: second. $\\Delta$ and rank by Track~2 PSNR.}\n"
         "\\label{tab:main}\n\\resizebox{\\textwidth}{!}{%\n"
-        "\\begin{tabular}{lrrcccccc}\n\\toprule\n"
+        "\\begin{tabular}{lrrccccccc}\n\\toprule\n"
         "\\multirow{2}{*}{Method} & \\multirow{2}{*}{Params} & \\multirow{2}{*}{ms / frame} & "
-        "\\multicolumn{2}{c}{Track 1: clean} & \\multicolumn{2}{c}{Track 2: streaming} & "
+        "\\multicolumn{2}{c}{Track 1: clean} & \\multicolumn{3}{c}{Track 2: streaming} & "
         "\\multirow{2}{*}{$\\Delta$ vs Lanczos} & \\multirow{2}{*}{Rank} \\\\\n"
-        "\\cmidrule(lr){4-5}\\cmidrule(lr){6-7}\n & & & PSNR$\\uparrow$ & SSIM$\\uparrow$ & PSNR$\\uparrow$ & SSIM$\\uparrow$ & & \\\\\n"
+        "\\cmidrule(lr){4-5}\\cmidrule(lr){6-8}\n & & & PSNR$\\uparrow$ & SSIM$\\uparrow$ & PSNR$\\uparrow$ & SSIM$\\uparrow$ & VMAF$\\uparrow$ & & \\\\\n"
         "\\midrule\n" + "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}}\n\\end{table*}\n"
     )
 
@@ -135,6 +136,24 @@ def ablation_table() -> str:
     )
 
 
+def flat_table(flat: list) -> str:
+    rows = []
+    for b in flat:
+        lo, hi = b["bin"]
+        rng = f"$<{hi}$" if lo == 0 else f"$\\geq{lo}$" if hi >= 99 else f"{lo}--{hi}"
+        cells = [rng, f"{b['n']:,}".replace(",", "{,}")] + [f"{b[k]:+.2f}" for k in ("balanced", "quality", "EfRLFN")]
+        rows.append(" & ".join(cells) + " \\\\")
+    return (
+        "\\begin{table}[t]\n\\centering\n"
+        "\\caption{\\textbf{Track~1 by frame difficulty.} Mean PSNR-Y gain over Lanczos (dB) per frame, "
+        "binned by the Lanczos PSNR of the frame. Low PSNR: textured, hard frames; high PSNR: flat, almost "
+        "flawless ones.}\n\\label{tab:flat}\n"
+        "\\begin{tabular}{lrccc}\n\\toprule\n"
+        "Lanczos PSNR & Frames & \\emph{balanced} & \\emph{quality} & EfRLFN \\\\\n\\midrule\n"
+        + "\n".join(rows) + "\n\\bottomrule\n\\end{tabular}\n\\end{table}\n"
+    )
+
+
 def macros(res: dict, meta: dict) -> str:
     lz_s = res["streaming"]["lanczos"]["psnr"]
     lz_c = res["clean"]["lanczos"]["psnr"]
@@ -151,6 +170,8 @@ def macros(res: dict, meta: dict) -> str:
         "nClips": str(meta["clips"]),
         "nFrames": f"{res['clean']['lanczos']['n']:,}".replace(",", "{,}"),
         "codecBest": CODEC_LABEL[best],
+        "vmafQualStream": f"{res['streaming']['quality']['vmaf'] - res['streaming']['lanczos']['vmaf']:+.1f}",
+        "vmafBalStream": f"{res['streaming']['balanced']['vmaf'] - res['streaming']['lanczos']['vmaf']:+.1f}",
     }
     return "".join(f"\\newcommand{{\\{k}}}{{{v}}}\n" for k, v in m.items())
 
@@ -173,7 +194,7 @@ def tradeoff_plot(res: dict, path: Path) -> None:
     ax.axhline(0, color="#777", lw=0.7, ls="--")
     ax.text(0.33, 0.015, "Lanczos", color="#555", fontsize=7)
     ax.axvspan(0.2, 12, color="#2a9d8f", alpha=0.08, lw=0)
-    ax.text(0.45, 0.93, "12 ms budget", transform=ax.transAxes, color="#2a7d6f", fontsize=7)
+    ax.text(0.03, 0.04, "12 ms budget", transform=ax.transAxes, color="#2a7d6f", fontsize=7)
     for name, ms, gain, params, color in pts:
         if gain is None:
             continue
@@ -181,8 +202,8 @@ def tradeoff_plot(res: dict, path: Path) -> None:
         ax.annotate(name, (ms, gain), textcoords="offset points", xytext=(6, -10 if name == "EfRLFN" else 6), fontsize=7)
     ax.set_xscale("log")
     ax.set_xlim(0.2, 400)
-    ymax = max(p[2] for p in pts if p[2] is not None)
-    ax.set_ylim(-0.05, ymax * 1.3)
+    gains = [p[2] for p in pts if p[2] is not None]
+    ax.set_ylim(min(0.0, min(gains)) - 0.1, max(gains) * 1.3)
     ax.set_xlabel("ms per frame, 1080p$\\to$4K (WebGPU, RTX 5080)")
     ax.set_ylabel("PSNR-Y gain over Lanczos (dB)")
     ax.grid(True, which="major", lw=0.3, alpha=0.5)
@@ -270,11 +291,11 @@ def main() -> None:
     (tables / "codecs.tex").write_text(codec_table(res), encoding="utf-8")
     (tables / "ablation.tex").write_text(ablation_table(), encoding="utf-8")
     (tables / "macros.tex").write_text(macros(res, meta), encoding="utf-8")
+    flat = Path(args.results) / "flatness.json"
+    if flat.exists():
+        (tables / "flat.tex").write_text(flat_table(json.loads(flat.read_text(encoding="utf-8"))), encoding="utf-8")
     figs = HERE / "figures"
     tradeoff_plot(res, figs / "tradeoff.pdf")
-    frames = Path(args.results) / "frames"
-    if frames.exists():
-        visual_figure(frames, figs / "visual.pdf")
     print("tables and figures written")
 
 
