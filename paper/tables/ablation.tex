@@ -1,0 +1,16 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Data scale.} PSNR-Y gain over Lanczos (dB) on the two training-time validation sets (mixed clean and compressed). Set A: 840 pairs; set B: 1{,}024 pairs, adds a Netflix \emph{Chimera} and a UVG-VCM scene.}
+\label{tab:ablation}
+\begin{tabular}{llcc}
+\toprule
+Model & Clips / pairs & Val A & Val B \\
+\midrule
+\emph{balanced} & 3,054 / 35k & +0.421 & +0.422 \\
+\emph{balanced} & 6,464 / 75k & \textbf{+0.439} & \textbf{+0.443} \\
+\midrule
+\emph{quality} & 3,054 / 35k & +0.504 & +0.506 \\
+\emph{quality} & 6,464 / 75k & \textbf{+0.513} & \textbf{+0.522} \\
+\bottomrule
+\end{tabular}
+\end{table}

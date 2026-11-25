@@ -1,0 +1,21 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{Track~2 by codec} (x264 CRF 26, x265 CRF 28, SVT-AV1 CRF 38 (preset 8)). PSNR-Y / SSIM-Y.}
+\label{tab:codecs}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccccc}
+\toprule
+Method & \multicolumn{2}{c}{H.264 (x264)} & \multicolumn{2}{c}{HEVC (x265)} & \multicolumn{2}{c}{AV1 (SVT)} \\
+\cmidrule(lr){2-3}\cmidrule(lr){4-5}\cmidrule(lr){6-7}
+ & PSNR & SSIM & PSNR & SSIM & PSNR & SSIM \\
+\midrule
+Bilinear & 32.37 & 0.8447 & 32.43 & 0.8471 & 33.14 & 0.8654 \\
+Bicubic & 32.70 & 0.8530 & 32.88 & 0.8575 & 33.74 & 0.8780 \\
+Lanczos (8-tap) & 32.78 & 0.8544 & 32.97 & 0.8594 & 33.89 & 0.8806 \\
+\midrule
+EfRLFN~\cite{efrlfn} & 32.67 & 0.8509 & 32.78 & 0.8545 & 33.61 & 0.8741 \\
+\rowcolor{gray!12} \emph{balanced} & \second{33.19} & \second{0.8624} & \second{33.35} & \second{0.8663} & \second{34.33} & \second{0.8861} \\
+\rowcolor{gray!12} \emph{quality} & \best{33.27} & \best{0.8640} & \best{33.42} & \best{0.8681} & \best{34.42} & \best{0.8881} \\
+\bottomrule
+\end{tabular}}
+\end{table}

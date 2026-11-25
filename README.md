@@ -7,6 +7,7 @@
 <p align="center">
   <a href="https://huggingface.co/PianoNic/LiveActionSR-2x"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Model-LiveActionSR--2x-0d1117" alt="Model" /></a>
   <a href="https://huggingface.co/PianoNic/EfRLFN-2x-WebGPU"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Model-EfRLFN--2x--WebGPU-0d1117" alt="EfRLFN" /></a>
+  <a href="https://huggingface.co/datasets/PianoNic/LiveActionSR-Data"><img src="https://img.shields.io/badge/%F0%9F%A4%97%20Dataset-LiveActionSR--Data-0d1117" alt="Dataset" /></a>
   <a href="https://github.com/PianoNic/ArtPlayerPluginLiveActionSR"><img src="https://img.shields.io/badge/Plugin-ArtPlayerPluginLiveActionSR-0d1117" alt="Plugin" /></a>
   <img src="https://img.shields.io/github/license/PianoNic/LiveActionSR?color=0d1117" alt="MIT" />
 </p>
@@ -53,6 +54,7 @@ So these networks are tiny 3x3-conv stacks:
 | [`tools/efrlfn/`](tools/efrlfn/README.md) | EfRLFN checkpoint → the plugin's graph weights format, with a numerical check |
 | [`models/`](models/NOTICE.md) | The exported weights (mirrored on Hugging Face and in the plugin) |
 | [`docs/research.md`](docs/research.md) | The research behind the design |
+| [`paper/`](paper/LiveActionSR.pdf) | The paper ([PDF](paper/LiveActionSR.pdf)), its benchmark and figure scripts; CI rebuilds it |
 
 ## Quick start
 

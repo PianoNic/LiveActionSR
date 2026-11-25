@@ -1,0 +1,35 @@
+% Data and deployment pipeline.
+\begin{tikzpicture}[
+    node distance=4mm and 5mm,
+    box/.style={draw=black!60, rounded corners=2pt, fill=#1, align=center, font=\scriptsize,
+                minimum height=10mm, text width=19mm, inner sep=2pt},
+    box/.default=white,
+    arr/.style={-{Stealth[length=2mm]}, line width=0.7pt, draw=black!70},
+    grp/.style={draw=black!35, dashed, rounded corners=3pt, inner sep=3pt},
+    gl/.style={font=\scriptsize\itshape, text=black!60}]
+  \definecolor{c1}{RGB}{230,240,250}
+  \definecolor{c2}{RGB}{252,236,214}
+  \definecolor{c3}{RGB}{226,242,226}
+  \definecolor{c4}{RGB}{240,230,245}
+
+  \node[box=c1] (src) {67 scenes, 5 permissive collections (ToS, Netflix OC, TUM, SVT, UVG-VCM)};
+  \node[box=c1, right=of src] (fetch) {\texttt{fetch}: HTTP range reads, sampled positions};
+  \node[box=c1, right=of fetch] (hr) {HR clips\\6.4k clips of 6 frames\\512$^2$, 16-bit};
+
+  \node[box=c2, below=of hr] (deg) {\texttt{bake}: blur, rescale, kernel, sharpen, noise};
+  \node[box=c2, left=of deg] (codec) {x264 / x265 / SVT-AV1 round-trip (CRF, preset, GOP)};
+  \node[box=c2, left=of codec] (pairs) {75{,}372 LR/HR luma pairs};
+
+  \node[box=c3, below=of pairs] (train) {\texttt{train}: L1, AdamW, bf16, 64$^2$ patches};
+  \node[box=c3, right=of train] (export) {\texttt{export}: JSON + ONNX, f16 check};
+  \node[box=c4, right=of export] (gpu) {WebGPU: deband $\to$ CNN $\to$ EASU $\to$ RCAS $\to$ grain};
+
+  \draw[arr] (src) -- (fetch);
+  \draw[arr] (fetch) -- (hr);
+  \draw[arr] (hr) -- (deg);
+  \draw[arr] (deg) -- (codec);
+  \draw[arr] (codec) -- (pairs);
+  \draw[arr] (pairs) -- (train);
+  \draw[arr] (train) -- (export);
+  \draw[arr] (export) -- (gpu);
+\end{tikzpicture}

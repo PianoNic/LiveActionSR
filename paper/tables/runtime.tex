@@ -1,0 +1,17 @@
+\begin{table}[t]
+\centering
+\caption{\textbf{In-browser runtime} (ms per frame, WebGPU, Chrome, RTX~5080, f16). CNN stage
+alone / complete chain (deband, CNN, EASU if needed, RCAS, grain).}
+\label{tab:runtime}
+\resizebox{\columnwidth}{!}{%
+\begin{tabular}{lcccc}
+\toprule
+Source $\to$ output & FSR~1 only & \emph{balanced} & \emph{quality} & EfRLFN \\
+\midrule
+360p $\to$ 720p & 0.07 & 0.39 / 0.39 & 1.05 / 1.08 & 12.0 / 12.3 \\
+720p $\to$ 1440p & 0.13 & 1.25 / 1.31 & 4.06 / 4.13 & 53.9 / 54.2 \\
+1080p $\to$ 2160p & 0.39 & 2.75 / 2.95 & 9.70 / 9.90 & 123.0 / 123.4 \\
+720p $\to$ 2160p & 0.39 & 1.44 / 1.61 & 4.33 / 4.46 & 54.8 / 55.1 \\
+\bottomrule
+\end{tabular}}
+\end{table}
