@@ -43,7 +43,7 @@ third of that for 720p$\to$1440p. On held-out streaming-compressed clips they ga
 Lanczos. Under the same protocol a ten times larger network fine-tuned for streaming, EfRLFN, stays
 below Lanczos. On clean downscales the picture splits: our networks gain up to
 0.6\,dB on textured frames but lose on flat, nearly flawless ones, ending
-\gainQualClean\,dB below Lanczos on average. Doubling the training data raised both gains on every
+\gainQualClean\,dB against Lanczos on average. Doubling the training data raised both gains on every
 validation set. We release the weights (MIT), the training pipeline, the
 data recipe with its licence audit, and a WebGPU port of EfRLFN.
 \end{abstract}
@@ -238,8 +238,8 @@ upstream PyTorch model) and its output is not shifted: a sub-pixel alignment sea
 best fit at zero offset. We suspect the gap comes from the degradation it was trained on, which differs
 from a bicubic 2$\times$ downscale followed by a standard encode. EfRLFN's own benchmark should
 not be read from these numbers.
-\item \textbf{Clean track:} Lanczos wins on average. \emph{quality} ends \gainQualClean\,dB and
-\emph{balanced} \gainBalClean\,dB below it.
+\item \textbf{Clean track:} Lanczos wins on average. \emph{quality} is at \gainQualClean\,dB and
+\emph{balanced} at \gainBalClean\,dB against it.
 \end{itemize}
 
 \Cref{tab:flat} explains the clean-track result.
@@ -282,7 +282,7 @@ in-browser runtime at 1080p$\to$4K. \emph{balanced} and \emph{quality} are 42$\t
 12$\times$ faster than EfRLFN. Only they fit the 12\,ms budget that a 24\,fps film leaves
 after decoding at 4K output.
 
-\begin{figure}[t]
+\begin{figure}[!htb]
   \centering
   \includegraphics[width=\columnwidth]{figures/tradeoff.pdf}
   \caption{\textbf{Streaming PSNR-Y gain over Lanczos vs.\ runtime} (complete WebGPU chain,

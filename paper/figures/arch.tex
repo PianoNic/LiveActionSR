@@ -20,7 +20,7 @@
     \fill[#5!88!white, draw=black!70, line width=0.35pt]
       (#1,#3/2) -- ++(#4*0.5,#4*0.35) -- ++(#2,0) -- ++(-#4*0.5,-#4*0.35) -- cycle;
     \coordinate (#6-w) at (#1,0);
-    \coordinate (#6-e) at (#1+#2+#4*0.25,#4*0.175);
+    \coordinate (#6-e) at (#1+#2+#4*0.25,0);
     \coordinate (#6-n) at (#1+#2/2+#4*0.25,#3/2+#4*0.35);
     \coordinate (#6-s) at (#1+#2/2,-#3/2);
   }
@@ -54,7 +54,7 @@
   % sum and output
   \node[circle, draw=black!70, fill=white, inner sep=1.5pt, font=\small] (sum) at (9.35,0) {$+$};
   \fmap{10.0}{0.12}{4.0}{0.25}{outp}{out}
-  \node[capt, below=2pt] at (out-s) {$\hat Y$, clamp $[0,1]$\\$2H\times 2W$};
+  \node[capt, anchor=west] at ($(out-e)+(0.15,0)$) {$\hat Y$, clamp $[0,1]$\\$2H\times 2W$};
 
   \draw[conn] (in-e) -- (c1-w);
   \draw[conn] (c1-e) -- (h0-w);
@@ -67,6 +67,6 @@
   \draw[conn, rounded corners=6pt] (in-n) -- ++(0,0.85) -| node[pos=0.25, above, lbl]
     {bilinear $2\times$ (half-pixel centres, clamp-to-edge)} (sum.north);
 
-  \node[lbl, anchor=west] at (0.0,-2.75) {$C=16$: \textit{balanced}, 12{,}340 parameters \quad
+  \node[lbl, anchor=west] at (0.0,-3.45) {$C=16$: \textit{balanced}, 12{,}340 parameters \quad
     $C=32$: \textit{quality}, 47{,}716 parameters \quad all convolutions pad by replication};
 \end{tikzpicture}

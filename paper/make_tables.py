@@ -36,6 +36,11 @@ ABLATION = {
 }
 
 
+def signed(v: float) -> str:
+    """+0.41 / $-$0.19 (a real minus sign in LaTeX)."""
+    return f"+{v:.2f}" if v >= 0 else f"$-${-v:.2f}"
+
+
 def marks(values: list[float | None], higher=True) -> list[str]:
     """\\best / \\second wrappers for the top two of a column."""
     real = sorted({v for v in values if v is not None}, reverse=higher)
@@ -68,7 +73,7 @@ def main_table(res: dict) -> str:
         p = f"{params / 1000:.1f}k" if params else "--"
         t = f"{ms:.2f}" if ms else "--"
         gain = res["streaming"][n]["psnr"] - lanczos
-        g = f"{gain:+.2f}" if n != "lanczos" else "0.00"
+        g = signed(gain) if n != "lanczos" else "0.00"
         cells = [label, p, t, marked[0][i], marked[1][i], marked[2][i], marked[3][i], marked[4][i], g, str(rank[n])]
         pre = "\\rowcolor{gray!12} " if ours else ""
         rows.append(pre + " & ".join(cells) + " \\\\")
@@ -141,7 +146,7 @@ def flat_table(flat: list) -> str:
     for b in flat:
         lo, hi = b["bin"]
         rng = f"$<{hi}$" if lo == 0 else f"$\\geq{lo}$" if hi >= 99 else f"{lo}--{hi}"
-        cells = [rng, f"{b['n']:,}".replace(",", "{,}")] + [f"{b[k]:+.2f}" for k in ("balanced", "quality", "EfRLFN")]
+        cells = [rng, f"{b['n']:,}".replace(",", "{,}")] + [signed(b[k]) for k in ("balanced", "quality", "EfRLFN")]
         rows.append(" & ".join(cells) + " \\\\")
     return (
         "\\begin{table}[t]\n\\centering\n"
@@ -157,7 +162,7 @@ def flat_table(flat: list) -> str:
 def macros(res: dict, meta: dict) -> str:
     lz_s = res["streaming"]["lanczos"]["psnr"]
     lz_c = res["clean"]["lanczos"]["psnr"]
-    g = lambda track, n, base: f"{res[track][n]['psnr'] - base:+.2f}"  # noqa: E731
+    g = lambda track, n, base: signed(res[track][n]["psnr"] - base)  # noqa: E731
     gains = {c: res[c]["quality"]["psnr"] - res[c]["lanczos"]["psnr"] for c in CODECS}
     best = max(gains, key=gains.get)
     m = {
@@ -199,7 +204,7 @@ def tradeoff_plot(res: dict, path: Path) -> None:
         if gain is None:
             continue
         ax.scatter(ms, gain, s=20 + params / 2500, color=color, edgecolor="black", lw=0.5, zorder=3)
-        ax.annotate(name, (ms, gain), textcoords="offset points", xytext=(6, -10 if name == "EfRLFN" else 6), fontsize=7)
+        ax.annotate(name, (ms, gain), textcoords="offset points", xytext={"EfRLFN": (6, -12), "balanced": (-10, -13)}.get(name, (6, 6)), fontsize=7)
     ax.set_xscale("log")
     ax.set_xlim(0.2, 400)
     gains = [p[2] for p in pts if p[2] is not None]
