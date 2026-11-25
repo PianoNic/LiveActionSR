@@ -2,7 +2,7 @@
 convert.py, with an input frame and the output of PyTorch and of `numpy_forward`. The TypeScript
 tests run `runGraphReference` on it, which ties the plugin's CPU reference to PyTorch.
 
-    python make_fixture.py ../../test/fixtures/efrlfn-tiny.json
+    python make_fixture.py ../../../ArtPlayerPluginLiveActionSR/test/fixtures/efrlfn-tiny.json
 """
 
 from __future__ import annotations

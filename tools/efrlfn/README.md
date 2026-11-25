@@ -54,6 +54,6 @@ Every run checks the written file, on a random 56x40 input and on each `--image`
 `--reference IMAGE OUT` also writes `numpy_forward(IMAGE)` as raw float32 `[3, 2H, 2W]`, which
 `demo/model-check.html?frame=...&ref=...` compares with the GPU's output.
 
-`make_fixture.py` writes `test/fixtures/efrlfn-tiny.json`: a narrow (8-channel) EfRLFN with random
+`make_fixture.py` writes the plugin's `test/fixtures/efrlfn-tiny.json`: a narrow (8-channel) EfRLFN with random
 weights, an input and its PyTorch/numpy output. The TypeScript tests run `runGraphReference` on it,
 which ties the plugin's CPU reference to PyTorch.

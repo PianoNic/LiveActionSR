@@ -1,6 +1,7 @@
 # Training: tiny 2x luma SR for live-action streams
 
-This folder trains the networks behind the plugin's **balanced** and **quality** presets. They are
+This folder trains the networks behind the **balanced** and **quality** presets of
+[ArtPlayerPluginLiveActionSR](https://github.com/PianoNic/ArtPlayerPluginLiveActionSR). They are
 plain 3x3-conv stacks of about 12k and 48k parameters. They upscale **luma only**, 2x, and predict
 a **residual over bilinear**. They are trained on **real codec damage** (H.264, HEVC and AV1
 round-trips through ffmpeg) of permissively licensed live-action footage. Why it is built this way
@@ -90,8 +91,9 @@ python export.py runs/balanced/best.pt --out ../models/balanced.json --onnx runs
 python export.py runs/quality/best.pt  --out ../models/quality.json  --onnx runs/quality/quality.onnx
 ```
 
-The plugin loads its weights from **`models/balanced.json`** and **`models/quality.json` at the
-repository root** (`runpod/run.sh` writes them there). `export.py` refuses to write a file whose
+`runpod/run.sh` writes them to **`models/` at the repository root**. To ship them, copy them to
+the plugin's `models/` (it bundles them in the npm package) and upload them to
+[PianoNic/LiveActionSR-2x](https://huggingface.co/PianoNic/LiveActionSR-2x). `export.py` refuses to write a file whose
 numpy re-implementation differs from PyTorch by more than 1e-4. It also prints the error of an f16
 evaluation: about 1e-3 max abs on random input, i.e. well under one 8-bit code value.
 
