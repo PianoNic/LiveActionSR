@@ -54,6 +54,7 @@ So these networks are tiny 3x3-conv stacks:
 | [`tools/efrlfn/`](tools/efrlfn/README.md) | EfRLFN checkpoint → the plugin's graph weights format, with a numerical check |
 | [`models/`](models/NOTICE.md) | The exported weights (mirrored on Hugging Face and in the plugin) |
 | [`docs/research.md`](docs/research.md) | The research behind the design |
+| [`paper/`](paper/LiveActionSR.pdf) | The paper ([PDF](paper/LiveActionSR.pdf)), its benchmark and figure scripts; CI rebuilds it |
 
 ## Quick start
 
