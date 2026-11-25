@@ -31,7 +31,7 @@ The plugin repository only holds the runtime: WGSL shaders, the player integrati
 
 ## Why
 
-Real-time shader CNNs exist, but they are anime-trained (Anime4K, CuNNy) or LGPL (FSRCNNX, ArtCNN derivatives). Live-action streams need something else:
+Real-time shader upscalers exist, but the good CNNs are anime-trained (ArtCNN, CuNNy, Anime4K) and the content-neutral ones (RAVU, nnedi3, FSRCNNX) are LGPL-3.0. Live-action streams need something else:
 
 - **The damage:** the problem is codec damage (banding, smeared texture, blocking), not soft line art.
 - **The budget:** a model has to fit a few milliseconds per frame on an integrated GPU.
