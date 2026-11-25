@@ -3,7 +3,7 @@
 \begin{tikzpicture}[x=1cm,y=1cm,
     conn/.style={-{Stealth[length=2.2mm]}, line width=0.9pt, draw=edge},
     lbl/.style={font=\scriptsize, align=center},
-    cap/.style={font=\scriptsize\bfseries, align=center}]
+    capt/.style={font=\scriptsize\bfseries, align=center}]
   \definecolor{conv}{RGB}{255,215,140}
   \definecolor{relu}{RGB}{235,150,70}
   \definecolor{shuf}{RGB}{160,200,235}
@@ -27,12 +27,12 @@
 
   % input luma
   \fmap{0}{0.12}{2.0}{0.25}{inp}{in}
-  \node[cap, below=2pt] at (in-s) {$Y$\\$H\times W$};
+  \node[capt, below=2pt] at (in-s) {$Y$\\$H\times W$};
 
   % conv1 + ReLU
   \fmap{1.0}{0.25}{2.0}{1.6}{conv}{c1}
   \fill[relu, draw=black!70, line width=0.35pt] (1.25,-1.0) rectangle ++(0.08,2.0);
-  \node[cap, below=2pt] at (c1-s) {conv 3$\times$3\\$1\to C$};
+  \node[capt, below=2pt] at (c1-s) {conv 3$\times$3\\$1\to C$};
 
   % 5 hidden conv + ReLU blocks
   \foreach \i in {0,...,4} {
@@ -41,20 +41,20 @@
     \fill[relu, draw=black!70, line width=0.35pt] (\xx+0.25,-1.0) rectangle ++(0.08,2.0);
   }
   \draw[decorate, decoration={brace, amplitude=4pt, mirror}] (2.55,-1.25) -- (6.0,-1.25)
-    node[midway, below=5pt, cap] {5 $\times$ [conv 3$\times$3, $C\to C$, ReLU]};
+    node[midway, below=5pt, capt] {5 $\times$ [conv 3$\times$3, $C\to C$, ReLU]};
 
   % conv to 4 channels
   \fmap{6.95}{0.25}{2.0}{0.4}{conv}{c4}
-  \node[cap, below=2pt] at (c4-s) {conv 3$\times$3\\$C\to 4$};
+  \node[capt, below=2pt] at (c4-s) {conv 3$\times$3\\$C\to 4$};
 
   % depth to space
   \fmap{8.15}{0.12}{4.0}{0.25}{shuf}{ds}
-  \node[cap, below=2pt] at (ds-s) {depth-to-space\\$2H\times 2W$};
+  \node[capt, below=2pt] at (ds-s) {depth-to-space\\$2H\times 2W$};
 
   % sum and output
   \node[circle, draw=black!70, fill=white, inner sep=1.5pt, font=\small] (sum) at (9.35,0) {$+$};
   \fmap{10.0}{0.12}{4.0}{0.25}{outp}{out}
-  \node[cap, below=2pt] at (out-s) {$\hat Y$, clamp $[0,1]$\\$2H\times 2W$};
+  \node[capt, below=2pt] at (out-s) {$\hat Y$, clamp $[0,1]$\\$2H\times 2W$};
 
   \draw[conn] (in-e) -- (c1-w);
   \draw[conn] (c1-e) -- (h0-w);
